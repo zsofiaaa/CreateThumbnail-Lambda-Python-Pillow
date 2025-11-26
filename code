@@ -5,7 +5,7 @@ import io
 s3_client = boto3.client('s3')
 
 # Set your target bucket name as an environment variable in Lambda
-TARGET_BUCKET = os.environ.get('TARGET_BUCKET')
+TARGET_BUCKET = os.environ.get('lambdahomework-targetimage')
 THUMB_SIZE = (128, 128)  # You can adjust this if needed
 
 def resize_image(image_data):
