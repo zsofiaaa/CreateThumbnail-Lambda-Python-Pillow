@@ -1,6 +1,6 @@
 import boto3, os, sys, uuid, json
-from PIL import Image
-import PIL.Image
+##from PIL import Image
+##import PIL.Image
 
 s3_client = boto3.client('s3')
 
