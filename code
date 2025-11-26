@@ -1,1 +1,50 @@
+import boto3, os, uuid, json
+from PIL import Image
+import io
+
+s3_client = boto3.client('s3')
+
+# Set your target bucket name as an environment variable in Lambda
+TARGET_BUCKET = os.environ.get('TARGET_BUCKET')
+THUMB_SIZE = (128, 128)  # You can adjust this if needed
+
+def resize_image(image_data):
+    with Image.open(io.BytesIO(image_data)) as image:
+        image.thumbnail(THUMB_SIZE)
+        output = io.BytesIO()
+        image.save(output, format='JPEG')
+        output.seek(0)
+        return output
+
+def lambda_handler(event, context):
+    for record in event['Records']:
+        # Direct S3 trigger
+        bucket = record['s3']['bucket']['name']
+        key = record['s3']['object']['key']
+
+        # Skip if already a thumbnail
+        if key.startswith("thumb_"):
+            print(f"Skipping thumbnail: {key}")
+            continue
+
+        # Download image from source bucket
+        download_obj = s3_client.get_object(Bucket=bucket, Key=key)
+        image_data = download_obj['Body'].read()
+
+        # Resize image
+        thumbnail_data = resize_image(image_data)
+
+        # Construct new key for thumbnail
+        filename = os.path.basename(key)
+        thumb_key = f"thumb_{filename}"
+
+        # Upload to target bucket
+        s3_client.put_object(
+            Bucket=TARGET_BUCKET,
+            Key=thumb_key,
+            Body=thumbnail_data,
+            ContentType='image/jpeg'
+        )
+
+        print(f"Thumbnail saved to {TARGET_BUCKET}/{thumb_key}")
 
